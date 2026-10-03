@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BHAVYA'S CHESS MASTER</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CHESS MASTER</title>
   <style>
     :root {
       --bg-dark: #0B0E14;
-      --card-bg: rgba(20, 26, 38, 0.85);
+      --card-bg: rgba(20, 26, 38, 0.9);
       --glass-border: rgba(255, 255, 255, 0.12);
-      --primary: #D4AF37; /* Metallic Gold */
+      --primary: #D4AF37;
       --primary-hover: #F3E5AB;
-      --accent: #00E5FF; /* Cyan Accent */
+      --accent: #00E5FF;
       --square-light: #E2D6B5;
       --square-dark: #7A8B99;
-      --selected-square: rgba(212, 175, 55, 0.5);
-      --last-move-square: rgba(255, 215, 0, 0.25);
+      --selected-square: rgba(212, 175, 55, 0.6);
+      --last-move-square: rgba(255, 215, 0, 0.3);
       --check-red: rgba(255, 30, 60, 0.85);
       --text-main: #F0F4F8;
       --text-sub: #94A3B8;
@@ -27,7 +27,7 @@
       padding: 0;
       user-select: none;
       -webkit-user-select: none;
-      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
     }
 
     body, html {
@@ -41,19 +41,20 @@
       align-items: center;
     }
 
-    /* GLASSMORPHISM WIZARD & MODALS */
+    /* MODALS & WIZARD */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(5, 7, 12, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(5, 7, 12, 0.9);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       z-index: 1000;
       display: flex;
       justify-content: center;
       align-items: center;
       opacity: 1;
       transition: opacity 0.3s ease;
+      padding: 16px;
     }
 
     .modal-overlay.hidden {
@@ -64,90 +65,76 @@
     .wizard-card {
       background: var(--card-bg);
       border: 1px solid var(--glass-border);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(212, 175, 55, 0.15);
-      border-radius: 20px;
-      width: 90%;
-      max-width: 600px;
-      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 500px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      position: relative;
-      animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @keyframes modalSlide {
-      from { transform: translateY(20px) scale(0.97); opacity: 0; }
-      to { transform: translateY(0) scale(1); opacity: 1; }
+      gap: 16px;
     }
 
     .wizard-header {
       text-align: center;
       border-bottom: 1px solid var(--glass-border);
-      padding-bottom: 16px;
+      padding-bottom: 10px;
     }
 
     .wizard-header h1 {
-      font-size: 2rem;
-      letter-spacing: 2px;
+      font-size: 1.4rem;
+      letter-spacing: 1px;
       color: var(--primary);
       text-transform: uppercase;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
     }
 
     .wizard-header p {
       color: var(--text-sub);
-      font-size: 0.95rem;
-      margin-top: 6px;
+      font-size: 0.85rem;
+      margin-top: 4px;
     }
 
     .wizard-step-content {
-      min-height: 220px;
+      min-height: 180px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 16px;
+      gap: 12px;
     }
 
     .step-page {
       display: none;
-      animation: fadeIn 0.3s ease-in-out;
     }
 
     .step-page.active {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateX(8px); }
-      to { opacity: 1; transform: translateX(0); }
+      gap: 10px;
     }
 
     .step-page h3 {
       color: var(--accent);
-      font-size: 1.25rem;
+      font-size: 1.1rem;
     }
 
     .step-page p, .step-page li {
       color: var(--text-main);
-      font-size: 0.95rem;
-      line-height: 1.5;
+      font-size: 0.88rem;
+      line-height: 1.4;
     }
 
     .step-page ul {
-      padding-left: 20px;
+      padding-left: 18px;
     }
 
     .option-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .option-label {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       color: var(--text-sub);
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -157,84 +144,73 @@
     .btn-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 10px;
     }
 
     .btn-select {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--glass-border);
       color: var(--text-main);
-      padding: 12px 16px;
-      border-radius: 10px;
+      padding: 10px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-select:hover {
-      background: rgba(212, 175, 55, 0.15);
-      border-color: var(--primary);
+      gap: 6px;
     }
 
     .btn-select.active {
       background: var(--primary);
       color: #000;
       border-color: var(--primary);
-      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
     }
 
     .btn-select:disabled {
       opacity: 0.3;
       cursor: not-allowed;
-      border-color: transparent;
     }
 
-    /* WIZARD NAVIGATION FOOTER */
     .wizard-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-top: 1px solid var(--glass-border);
-      padding-top: 16px;
+      padding-top: 12px;
     }
 
     .step-dots {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
     }
 
     .dot.active {
       background: var(--primary);
-      box-shadow: 0 0 8px var(--primary);
-      width: 24px;
-      border-radius: 10px;
+      width: 18px;
+      border-radius: 8px;
     }
 
     .nav-btns {
       display: flex;
-      gap: 12px;
+      gap: 8px;
     }
 
     .btn-nav {
-      padding: 10px 24px;
-      border-radius: 8px;
+      padding: 8px 18px;
+      border-radius: 6px;
       border: none;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s ease;
+      font-size: 0.85rem;
     }
 
     .btn-back {
@@ -242,60 +218,48 @@
       color: var(--text-main);
     }
 
-    .btn-back:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
     .btn-next {
       background: var(--primary);
       color: #000;
-      box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
     }
 
-    .btn-next:hover {
-      background: var(--primary-hover);
-      box-shadow: 0 0 18px rgba(212, 175, 55, 0.5);
-    }
-
-    /* MAIN APP LAYOUT */
+    /* MAIN DISPLAY - FIT MOBILE PERFECTLY */
     #app-container {
       width: 100vw;
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 12px;
-      position: relative;
+      padding: 6px;
+      box-sizing: border-box;
     }
 
     .game-wrapper {
       display: flex;
       width: 100%;
       height: 100%;
-      max-width: 1400px;
-      gap: 20px;
+      max-width: 1200px;
+      gap: 12px;
       align-items: center;
       justify-content: center;
     }
 
-    /* CHESSBOARD CONTAINER - PERFECT SQUARE */
+    /* BOARD FLEXIBLE RESIZING */
     .board-container {
-      height: 94vh;
-      width: 94vh;
-      max-width: 100%;
-      max-height: 100%;
-      aspect-ratio: 1 / 1;
+      width: min(94vw, 75vh);
+      height: min(94vw, 75vh);
       display: grid;
       grid-template-columns: repeat(8, 1fr);
       grid-template-rows: repeat(8, 1fr);
-      border-radius: 12px;
+      border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
-      border: 4px solid #1E2638;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      border: 3px solid #1E2638;
       position: relative;
+      flex-shrink: 0;
     }
 
-    /* SQUARES */
+    /* SQUARES & PIECES */
     .square {
       width: 100%;
       height: 100%;
@@ -304,159 +268,127 @@
       align-items: center;
       position: relative;
       cursor: pointer;
-      transition: background-color 0.15s ease;
     }
 
-    .square.light {
-      background-color: var(--square-light);
-    }
+    .square.light { background-color: var(--square-light); }
+    .square.dark { background-color: var(--square-dark); }
+    .square.selected { background-color: var(--selected-square) !important; }
+    .square.last-move { background-color: var(--last-move-square) !important; }
 
-    .square.dark {
-      background-color: var(--square-dark);
-    }
-
-    .square.selected {
-      background-color: var(--selected-square) !important;
-    }
-
-    .square.last-move {
-      background-color: var(--last-move-square) !important;
-    }
-
-    /* Pulsing Glowing Red Warning for Kings in Check */
     .square.in-check {
       background-color: var(--check-red) !important;
-      box-shadow: inset 0 0 20px #FF0033, 0 0 20px #FF0033;
       animation: checkPulse 1s infinite alternate;
-      z-index: 2;
     }
 
     @keyframes checkPulse {
-      from { box-shadow: inset 0 0 10px #FF0033, 0 0 10px #FF0033; }
-      to { box-shadow: inset 0 0 25px #FF0033, 0 0 30px #FF0033; }
+      from { box-shadow: inset 0 0 5px #FF0033; }
+      to { box-shadow: inset 0 0 15px #FF0033; }
     }
 
-    /* DESTINATION HIGHLIGHT (Dots, no total brown squares) */
     .move-dot {
-      width: 26%;
-      height: 26%;
-      background: rgba(0, 229, 255, 0.7);
+      width: 28%;
+      height: 28%;
+      background: rgba(0, 229, 255, 0.85);
       border-radius: 50%;
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.8);
       pointer-events: none;
       z-index: 3;
     }
 
     .capture-ring {
-      width: 82%;
-      height: 82%;
-      border: 4px solid rgba(255, 40, 80, 0.85);
+      width: 80%;
+      height: 80%;
+      border: 3px solid rgba(255, 40, 80, 0.9);
       border-radius: 50%;
       position: absolute;
-      box-shadow: 0 0 12px rgba(255, 40, 80, 0.6);
       pointer-events: none;
       z-index: 3;
     }
 
-    /* PIECES */
+    /* Crisp Visible Pieces */
     .piece {
-      width: 90%;
-      height: 90%;
+      width: 100%;
+      height: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: calc(80vh / 10);
+      font-size: min(10vw, 7.5vh);
       line-height: 1;
       z-index: 2;
-      transition: transform 0.15s ease;
-      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
     }
 
-    /* Distinct Piece Styling */
     .piece.white-piece {
       color: #FFFFFF;
-      text-shadow: 0 0 2px #000, 0 2px 5px rgba(0,0,0,0.8);
+      text-shadow: 0 0 2px #000, 0 1px 3px rgba(0,0,0,0.8);
     }
 
     .piece.black-piece {
-      color: #111116;
-      text-shadow: 0 0 2px #FFF, 0 2px 5px rgba(255,255,255,0.2);
+      color: #0A0A0E;
+      text-shadow: 0 0 2px #FFF, 0 1px 3px rgba(255,255,255,0.4);
     }
 
-    .square:hover .piece {
-      transform: scale(1.08);
-    }
-
-    /* BOARD COORDINATES */
     .coord {
       position: absolute;
-      font-size: 0.7rem;
+      font-size: 0.6rem;
       font-weight: 700;
-      opacity: 0.6;
+      opacity: 0.5;
       pointer-events: none;
     }
 
-    .coord.file {
-      bottom: 2px;
-      right: 4px;
-    }
-
-    .coord.rank {
-      top: 2px;
-      left: 4px;
-    }
+    .coord.file { bottom: 1px; right: 2px; }
+    .coord.rank { top: 1px; left: 2px; }
 
     .light .coord { color: var(--square-dark); }
     .dark .coord { color: var(--square-light); }
 
-    /* SIDE DASHBOARD PANEL */
+    /* PANEL - MOVED HEADER TO BOTTOM AND MADE SMALLER */
     .side-panel {
       flex: 1;
-      max-width: 360px;
-      height: 94vh;
+      max-width: 340px;
+      height: min(94vw, 75vh);
       background: var(--card-bg);
       border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
 
+    /* Small header moved down */
     .brand-title {
-      font-size: 1.25rem;
-      font-weight: 800;
+      font-size: 0.75rem;
+      font-weight: 700;
       color: var(--primary);
       text-align: center;
       letter-spacing: 1px;
       text-transform: uppercase;
-      border-bottom: 1px solid var(--glass-border);
-      padding-bottom: 12px;
+      padding-top: 4px;
+      border-top: 1px solid var(--glass-border);
+      margin-top: auto;
     }
 
     .game-status-card {
       background: rgba(0, 0, 0, 0.25);
-      border-radius: 10px;
-      padding: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 8px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .status-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
     .status-badge {
-      padding: 4px 10px;
-      border-radius: 20px;
+      padding: 2px 8px;
+      border-radius: 12px;
       font-weight: 700;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       background: var(--accent);
       color: #000;
     }
@@ -464,90 +396,76 @@
     .turn-indicator {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
       font-weight: 700;
-      font-size: 1.05rem;
+      font-size: 0.85rem;
       color: var(--primary);
     }
 
     .turn-box {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
       border: 1px solid #FFF;
     }
 
     .turn-box.white { background: #FFF; }
     .turn-box.black { background: #000; }
 
-    /* CAPTURED PIECES */
     .captured-section {
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      padding: 10px;
+      border-radius: 8px;
+      padding: 6px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      min-height: 70px;
+      gap: 4px;
+      min-height: 50px;
     }
 
     .captured-row {
       display: flex;
       align-items: center;
-      gap: 4px;
-      font-size: 1.2rem;
-      height: 28px;
+      gap: 2px;
+      font-size: 1rem;
+      height: 22px;
       overflow-x: auto;
     }
 
-    /* MOVE LOG */
     .move-log-box {
       flex: 1;
       background: rgba(0, 0, 0, 0.3);
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 12px;
+      padding: 8px;
       overflow-y: auto;
       font-family: monospace;
-      font-size: 0.88rem;
+      font-size: 0.75rem;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
 
     .log-entry {
       display: flex;
       justify-content: space-between;
-      padding: 3px 6px;
-      border-radius: 4px;
+      padding: 2px 4px;
     }
 
-    .log-entry:nth-child(even) {
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    /* CONTROL BUTTONS */
     .control-btns {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn-action {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--glass-border);
       color: var(--text-main);
-      padding: 10px;
-      border-radius: 8px;
+      padding: 8px;
+      border-radius: 6px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 0.85rem;
-    }
-
-    .btn-action:hover {
-      background: rgba(212, 175, 55, 0.2);
-      border-color: var(--primary);
+      font-size: 0.75rem;
     }
 
     .btn-action.reset {
@@ -556,57 +474,42 @@
       border-color: rgba(255, 40, 80, 0.4);
     }
 
-    .btn-action.reset:hover {
-      background: rgba(255, 40, 80, 0.4);
-    }
-
-    /* PROMOTION DIALOG */
     .promo-options {
       display: flex;
-      gap: 16px;
+      gap: 12px;
       justify-content: center;
-      margin-top: 15px;
+      margin-top: 10px;
     }
 
     .promo-btn {
-      width: 60px;
-      height: 60px;
-      font-size: 2.5rem;
+      width: 50px;
+      height: 50px;
+      font-size: 2rem;
       background: rgba(255,255,255,0.1);
       border: 1px solid var(--primary);
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s;
     }
 
-    .promo-btn:hover {
-      transform: scale(1.15);
-      background: var(--primary);
-    }
-
-    /* RESPONSIVE LAYOUT ADJUSTMENT */
-    @media (max-width: 900px) {
-      #app-container {
-        padding: 4px;
-      }
+    /* MOBILE LAYOUT SPECIFIC ADJUSTMENTS */
+    @media (max-width: 800px) {
       .game-wrapper {
         flex-direction: column;
         justify-content: flex-start;
-      }
-      .board-container {
-        width: 100vw;
-        height: 100vw;
-        max-width: 96vw;
-        max-height: 96vw;
+        gap: 6px;
       }
       .side-panel {
         width: 100%;
-        max-width: 100%;
+        max-width: min(94vw, 75vh);
         height: auto;
-        max-height: 35vh;
+        padding: 8px;
+        gap: 6px;
+      }
+      .move-log-box {
+        max-height: 60px;
       }
     }
   </style>
@@ -617,55 +520,52 @@
   <div class="modal-overlay" id="wizardModal">
     <div class="wizard-card">
       <div class="wizard-header">
-        <h1>BHAVYA'S CHESS MASTER</h1>
-        <p>Interactive Master Edition</p>
+        <h1>CHESS MASTER</h1>
+        <p>Mobile Optimized Edition</p>
       </div>
 
       <div class="wizard-step-content">
-        <!-- Step 1: Welcome -->
+        <!-- Step 1 -->
         <div class="step-page active" id="step1">
           <h3>Welcome, Chess Master!</h3>
-          <p>Experience an elite, full-screen HTML5 chess environment equipped with standard rules, smooth visuals, and zero-freeze gameplay.</p>
-          <p>Features included:</p>
+          <p>Experience an interactive chess engine designed for seamless mobile play.</p>
           <ul>
-            <li>Play locally with a friend or against our built-in AI Engine.</li>
-            <li>Real-time Check & Checkmate glowing highlights.</li>
-            <li>Interactive undo, move log history, and custom options.</li>
+            <li>Play against AI or with a friend locally.</li>
+            <li>Real-time Check & Checkmate warnings.</li>
+            <li>Full support for Castling, En Passant & Promotion.</li>
           </ul>
         </div>
 
-        <!-- Step 2: Essential Rules -->
+        <!-- Step 2 -->
         <div class="step-page" id="step2">
-          <h3>Chess Mechanics & Rules</h3>
-          <p>This engine fully enforces official chess guidelines:</p>
+          <h3>Chess Mechanics</h3>
+          <p>This engine strictly follows standard rules:</p>
           <ul>
-            <li><strong>Castling:</strong> King and Rook double move when unhindered.</li>
-            <li><strong>En Passant:</strong> Special pawn capturing technique.</li>
-            <li><strong>Pawn Promotion:</strong> Choice of Queen, Rook, Bishop, or Knight upon reaching rank 8.</li>
-            <li><strong>Check Warning:</strong> Glowing red visual alerts when Kings are endangered.</li>
+            <li><strong>Castling:</strong> Unhindered move between King & Rook.</li>
+            <li><strong>En Passant:</strong> Pawn capturing rule.</li>
+            <li><strong>Pawn Promotion:</strong> Choice of Queen, Rook, Bishop, or Knight.</li>
           </ul>
         </div>
 
-        <!-- Step 3: Tips & Strategy -->
+        <!-- Step 3 -->
         <div class="step-page" id="step3">
-          <h3>Master Strategy Tips</h3>
-          <p>Improve your game performance with these principles:</p>
+          <h3>Strategy Tips</h3>
           <ul>
-            <li><strong>Control the Center:</strong> Dominate squares e4, d4, e5, d5 early.</li>
-            <li><strong>Develop Pieces:</strong> Bring Knights and Bishops into play before attacking.</li>
-            <li><strong>King Safety:</strong> Castle early to protect your King behind pawn shields.</li>
+            <li><strong>Center Control:</strong> Command key central squares early.</li>
+            <li><strong>Piece Development:</strong> Move Knights and Bishops into key positions.</li>
+            <li><strong>Protect Your King:</strong> Castle early for defense.</li>
           </ul>
         </div>
 
-        <!-- Step 4: Game Setup (Mode & Side Selection) -->
+        <!-- Step 4 -->
         <div class="step-page" id="step4">
           <h3>Game Setup</h3>
           
           <div class="option-group">
             <div class="option-label">Game Mode</div>
             <div class="btn-grid">
-              <button class="btn-select active" id="modeFriend" onclick="selectMode('friend')">👥 Play with Friend</button>
-              <button class="btn-select" id="modeAi" onclick="selectMode('ai')">🤖 Play with Computer</button>
+              <button class="btn-select active" id="modeFriend" onclick="selectMode('friend')">👥 Pass & Play</button>
+              <button class="btn-select" id="modeAi" onclick="selectMode('ai')">🤖 Vs Computer</button>
             </div>
           </div>
 
@@ -678,7 +578,7 @@
           </div>
 
           <div class="option-group">
-            <div class="option-label">AI Difficulty (If playing Computer)</div>
+            <div class="option-label">Computer Difficulty</div>
             <div class="btn-grid">
               <button class="btn-select active ai-opt" id="diffCasual" disabled onclick="selectDiff('casual')">Casual</button>
               <button class="btn-select ai-opt" id="diffPro" disabled onclick="selectDiff('pro')">Pro Minimax</button>
@@ -687,7 +587,6 @@
         </div>
       </div>
 
-      <!-- Footer Nav -->
       <div class="wizard-footer">
         <div class="step-dots">
           <div class="dot active"></div>
@@ -703,18 +602,18 @@
     </div>
   </div>
 
-  <!-- 2. GAME OVER / VICTORY MODAL -->
+  <!-- 2. VICTORY MODAL -->
   <div class="modal-overlay hidden" id="victoryModal">
     <div class="wizard-card" style="text-align: center; align-items: center;">
-      <h1 id="victoryTitle" style="color: var(--primary); font-size: 2rem;">CHECKMATE!</h1>
-      <p id="victoryMsg" style="font-size: 1.2rem; color: var(--text-main); margin: 10px 0;"></p>
+      <h1 id="victoryTitle" style="color: var(--primary); font-size: 1.5rem;">CHECKMATE!</h1>
+      <p id="victoryMsg" style="font-size: 1rem; color: var(--text-main); margin: 8px 0;"></p>
       <button class="btn-nav btn-next" onclick="restartGame()">Start New Game</button>
     </div>
   </div>
 
-  <!-- 3. PAWN PROMOTION MODAL -->
+  <!-- 3. PROMOTION MODAL -->
   <div class="modal-overlay hidden" id="promoModal">
-    <div class="wizard-card" style="text-align: center; max-width: 400px;">
+    <div class="wizard-card" style="text-align: center; max-width: 320px;">
       <h3 style="color: var(--primary);">Choose Promotion</h3>
       <div class="promo-options" id="promoContainer"></div>
     </div>
@@ -723,17 +622,15 @@
   <!-- MAIN APP DISPLAY -->
   <div id="app-container">
     <div class="game-wrapper">
-      <!-- Full Viewport Square Board -->
+      <!-- Resizable Chessboard -->
       <div class="board-container" id="chessBoard"></div>
 
-      <!-- Side Information Panel -->
+      <!-- Side Dashboard Panel -->
       <div class="side-panel">
-        <div class="brand-title">BHAVYA'S CHESS MASTER</div>
-
         <div class="game-status-card">
           <div class="status-row">
             <span>Mode:</span>
-            <span class="status-badge" id="displayMode">Play with Friend</span>
+            <span class="status-badge" id="displayMode">Pass & Play</span>
           </div>
           <div class="status-row">
             <span>Turn:</span>
@@ -745,7 +642,7 @@
         </div>
 
         <div class="captured-section">
-          <div style="font-size: 0.75rem; color: var(--text-sub); font-weight: 700;">CAPTURED PIECES</div>
+          <div style="font-size: 0.65rem; color: var(--text-sub); font-weight: 700;">CAPTURED PIECES</div>
           <div class="captured-row" id="capturedWhite"></div>
           <div class="captured-row" id="capturedBlack"></div>
         </div>
@@ -755,16 +652,19 @@
         </div>
 
         <div class="control-btns">
-          <button class="btn-action" onclick="undoMove()">↩ Undo Move</button>
-          <button class="btn-action" onclick="flipBoard()">🔄 Flip Board</button>
-          <button class="btn-action reset" onclick="openWizard()">⚙ New Setup</button>
+          <button class="btn-action" onclick="undoMove()">↩ Undo</button>
+          <button class="btn-action" onclick="flipBoard()">🔄 Flip</button>
+          <button class="btn-action reset" onclick="openWizard()">⚙ New Game</button>
         </div>
+
+        <!-- Moved and reduced header label -->
+        <div class="brand-title">BHAVYA'S CHESS MASTER</div>
       </div>
     </div>
   </div>
 
   <script>
-    /* AUDIO SYNTHESIS FOR SOUND EFFECTS */
+    /* AUDIO SYNTHESIS */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
       if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -825,18 +725,17 @@
     let moveHistory = [];
     let capturedPieces = { w: [], b: [] };
     let boardFlipped = false;
-    let pendingPromotion = null;
 
     // Configuration Settings
-    let gameMode = 'friend'; // 'friend' or 'ai'
-    let playerSide = 'w';    // 'w' or 'b'
-    let aiDifficulty = 'casual'; // 'casual' or 'pro'
+    let gameMode = 'friend';
+    let playerSide = 'w';
+    let aiDifficulty = 'casual';
 
-    // Castling Rights & En Passant
+    // Castling & En Passant
     let castlingRights = { wK: true, wQ: true, bK: true, bQ: true };
     let enPassantTarget = null;
 
-    /* ONBOARDING WIZARD FLOW */
+    /* ONBOARDING FLOW */
     let currentStep = 1;
 
     function updateWizardUI() {
@@ -848,7 +747,7 @@
       });
 
       document.getElementById('btnBack').style.display = currentStep === 1 ? 'none' : 'inline-block';
-      document.getElementById('btnNext').innerText = currentStep === 4 ? 'Launch Game ♟' : 'Next';
+      document.getElementById('btnNext').innerText = currentStep === 4 ? 'Play Game ♟' : 'Next';
     }
 
     function changeStep(delta) {
@@ -856,7 +755,6 @@
         currentStep += delta;
         updateWizardUI();
       } else if (currentStep + delta > 4) {
-        // Close Wizard & Start Game
         document.getElementById('wizardModal').classList.add('hidden');
         restartGame();
       }
@@ -868,7 +766,7 @@
       document.getElementById('wizardModal').classList.remove('hidden');
     }
 
-    /* SETUP SELECTION HANDLERS */
+    /* SETUP SELECTIONS */
     function selectMode(mode) {
       gameMode = mode;
       document.getElementById('modeFriend').classList.toggle('active', mode === 'friend');
@@ -903,11 +801,10 @@
       enPassantTarget = null;
       boardFlipped = (gameMode === 'ai' && playerSide === 'b');
 
-      document.getElementById('displayMode').innerText = gameMode === 'ai' ? `Computer (${aiDifficulty.toUpperCase()})` : 'Play with Friend';
+      document.getElementById('displayMode').innerText = gameMode === 'ai' ? `Vs Computer (${aiDifficulty.toUpperCase()})` : 'Pass & Play';
       updateStatusUI();
       renderBoard();
 
-      // Trigger AI if player picked Black
       if (gameMode === 'ai' && turn !== playerSide) {
         setTimeout(makeAIMove, 500);
       }
@@ -928,15 +825,11 @@
 
           const sq = document.createElement('div');
           sq.className = `square ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
-          sq.dataset.row = row;
-          sq.dataset.col = col;
 
-          // Selected Square Highlight
           if (selectedSquare && selectedSquare.r === row && selectedSquare.c === col) {
             sq.classList.add('selected');
           }
 
-          // Last Move Highlight
           if (moveHistory.length > 0) {
             const last = moveHistory[moveHistory.length - 1];
             if ((last.from.r === row && last.from.c === col) || (last.to.r === row && last.to.c === col)) {
@@ -944,12 +837,10 @@
             }
           }
 
-          // King Check Warning Aura Highlight
           if (kingInCheckPos && kingInCheckPos.r === row && kingInCheckPos.c === col) {
             sq.classList.add('in-check');
           }
 
-          // Valid Move Indicators (Dots and Rings - NO BROWN OVERLAY)
           const isTarget = validMoves.find(m => m.r === row && m.c === col);
           if (isTarget) {
             if (piece) {
@@ -963,7 +854,6 @@
             }
           }
 
-          // Render Piece
           if (piece) {
             const pieceEl = document.createElement('div');
             const colorClass = piece[0] === 'w' ? 'white-piece' : 'black-piece';
@@ -972,7 +862,6 @@
             sq.appendChild(pieceEl);
           }
 
-          // File & Rank Coordinates
           if (col === (boardFlipped ? 7 : 0)) {
             const rankLabel = document.createElement('span');
             rankLabel.className = 'coord rank';
@@ -994,11 +883,10 @@
 
     /* INTERACTION & GAME LOGIC */
     function handleSquareClick(r, c) {
-      if (gameMode === 'ai' && turn !== playerSide) return; // Prevent clicking during AI turn
+      if (gameMode === 'ai' && turn !== playerSide) return;
 
       const piece = board[r][c];
 
-      // If clicking own piece, select it
       if (piece && piece[0] === turn) {
         selectedSquare = { r, c };
         validMoves = getLegalMoves(r, c);
@@ -1006,7 +894,6 @@
         return;
       }
 
-      // If square is valid move destination
       if (selectedSquare) {
         const move = validMoves.find(m => m.r === r && m.c === c);
         if (move) {
@@ -1014,7 +901,6 @@
           selectedSquare = null;
           validMoves = [];
 
-          // AI Response Trigger
           if (gameMode === 'ai' && turn !== playerSide) {
             setTimeout(makeAIMove, 400);
           }
@@ -1031,7 +917,6 @@
       const piece = board[from.r][from.c];
       const targetPiece = board[to.r][to.c];
 
-      // Record Captured Pieces
       if (targetPiece) {
         capturedPieces[turn].push(targetPiece);
         playSound('capture');
@@ -1039,7 +924,6 @@
         playSound('move');
       }
 
-      // Handle Special Rules
       if (special === 'enPassant') {
         const capRow = piece[0] === 'w' ? to.r + 1 : to.r - 1;
         capturedPieces[turn].push(board[capRow][to.c]);
@@ -1052,18 +936,15 @@
         board[from.r][3] = piece[0] + 'R';
       }
 
-      // Update En Passant Target
       if (piece[1] === 'P' && Math.abs(from.r - to.r) === 2) {
         enPassantTarget = { r: (from.r + to.r) / 2, c: from.c };
       } else {
         enPassantTarget = null;
       }
 
-      // Move Piece
       board[to.r][to.c] = piece;
       board[from.r][from.c] = null;
 
-      // Castling Rights Loss
       if (piece === 'wK') { castlingRights.wK = false; castlingRights.wQ = false; }
       if (piece === 'bK') { castlingRights.bK = false; castlingRights.bQ = false; }
       if (piece === 'wR' && from.c === 7) castlingRights.wK = false;
@@ -1071,10 +952,9 @@
       if (piece === 'bR' && from.c === 7) castlingRights.bK = false;
       if (piece === 'bR' && from.c === 0) castlingRights.bQ = false;
 
-      // Handle Promotion
       if (piece[1] === 'P' && (to.r === 0 || to.r === 7)) {
         if (gameMode === 'ai' && turn !== playerSide) {
-          board[to.r][to.c] = turn + 'Q'; // AI defaults to Queen
+          board[to.r][to.c] = turn + 'Q';
           finalizeTurn(from, to, piece);
         } else {
           promptPromotion(to.r, to.c, turn, () => finalizeTurn(from, to, piece));
@@ -1086,15 +966,12 @@
     }
 
     function finalizeTurn(from, to, piece) {
-      // Record Move History
       const moveTxt = `${piece} ${String.fromCharCode(97 + from.c)}${8 - from.r} → ${String.fromCharCode(97 + to.c)}${8 - to.r}`;
       moveHistory.push({ from, to, piece, txt: moveTxt, boardState: JSON.parse(JSON.stringify(board)) });
 
-      // Switch Turn
       turn = turn === 'w' ? 'b' : 'w';
       updateStatusUI();
 
-      // Check / Checkmate Status
       if (isInCheck(turn)) {
         playSound('check');
         if (hasNoLegalMoves(turn)) {
@@ -1132,7 +1009,7 @@
       document.getElementById('victoryModal').classList.remove('hidden');
     }
 
-    /* MOVE LOGIC & RULE VALIDATION */
+    /* MOVES VALIDATION */
     function getPseudoLegalMoves(r, c) {
       const piece = board[r][c];
       if (!piece) return [];
@@ -1144,21 +1021,18 @@
       const startRank = color === 'w' ? 6 : 1;
 
       if (type === 'P') {
-        // Forward
         if (r + dirPawn >= 0 && r + dirPawn < 8 && !board[r + dirPawn][c]) {
           moves.push({ r: r + dirPawn, c });
           if (r === startRank && !board[r + 2 * dirPawn][c]) {
             moves.push({ r: r + 2 * dirPawn, c });
           }
         }
-        // Capture
         [-1, 1].forEach(dc => {
           if (c + dc >= 0 && c + dc < 8) {
             const target = board[r + dirPawn][c + dc];
             if (target && target[0] !== color) {
               moves.push({ r: r + dirPawn, c: c + dc });
             }
-            // En Passant
             if (enPassantTarget && enPassantTarget.r === r + dirPawn && enPassantTarget.c === c + dc) {
               moves.push({ r: r + dirPawn, c: c + dc, special: 'enPassant' });
             }
@@ -1181,7 +1055,6 @@
           }
         });
 
-        // Castling
         if (!isInCheck(color)) {
           if (castlingRights[color + 'K'] && !board[r][5] && !board[r][6]) {
             moves.push({ r, c: 6, special: 'castleK' });
@@ -1191,7 +1064,6 @@
           }
         }
       } else {
-        // Rays for Bishop, Rook, Queen
         const dirs = [];
         if (type === 'R' || type === 'Q') dirs.push([-1,0],[1,0],[0,-1],[0,1]);
         if (type === 'B' || type === 'Q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
@@ -1216,7 +1088,6 @@
       const pseudo = getPseudoLegalMoves(r, c);
       const color = board[r][c][0];
       return pseudo.filter(m => {
-        // Simulate move
         const tempBoard = JSON.parse(JSON.stringify(board));
         tempBoard[m.r][m.c] = tempBoard[r][c];
         tempBoard[r][c] = null;
@@ -1249,7 +1120,6 @@
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
           if (boardRef[r][c] && boardRef[r][c][0] === enemyColor) {
-            // Basic pseudo check for enemy attacking king's square
             const p = boardRef[r][c];
             if (p[1] === 'P') {
               const dir = enemyColor === 'w' ? -1 : 1;
@@ -1293,7 +1163,7 @@
       return true;
     }
 
-    /* ASYNCHRONOUS AI ENGINE */
+    /* AI ENGINE */
     function makeAIMove() {
       const allMoves = [];
       for (let r = 0; r < 8; r++) {
@@ -1311,7 +1181,6 @@
       if (aiDifficulty === 'casual') {
         chosenMove = allMoves[Math.floor(Math.random() * allMoves.length)];
       } else {
-        // Pro Difficulty (Material Evaluation)
         let bestScore = -Infinity;
         chosenMove = allMoves[0];
 
@@ -1332,21 +1201,18 @@
       const target = board[mv.to.r][mv.to.c];
       let score = 0;
       if (target) score += pValues[target[1]] * 10;
-      // Prefer center positioning
       if (mv.to.r >= 3 && mv.to.r <= 4 && mv.to.c >= 3 && mv.to.c <= 4) score += 5;
       return score;
     }
 
-    /* UI PANEL UPDATES */
+    /* UI UPDATES */
     function updateStatusUI() {
       document.getElementById('turnText').innerText = turn === 'w' ? "White's Move" : "Black's Move";
       document.getElementById('turnBox').className = `turn-box ${turn === 'w' ? 'white' : 'black'}`;
 
-      // Render Captured
       document.getElementById('capturedWhite').innerHTML = capturedPieces.w.map(p => SYMBOLS[p]).join(' ');
       document.getElementById('capturedBlack').innerHTML = capturedPieces.b.map(p => SYMBOLS[p]).join(' ');
 
-      // Render Move Log
       const logEl = document.getElementById('moveLog');
       logEl.innerHTML = '';
       moveHistory.forEach((m, i) => {
@@ -1376,7 +1242,6 @@
       renderBoard();
     }
 
-    // Initialize On Load
     window.onload = () => {
       openWizard();
     };
