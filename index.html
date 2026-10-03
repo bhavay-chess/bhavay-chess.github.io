@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>CHESS MASTER</title>
+  <title>CHESS MASTER - MULTI-QUEEN EDITION</title>
   <style>
     :root {
       --bg-dark: #0B0E14;
@@ -223,7 +223,7 @@
       color: #000;
     }
 
-    /* MAIN DISPLAY - FIT MOBILE PERFECTLY */
+    /* MAIN DISPLAY */
     #app-container {
       width: 100vw;
       height: 100vh;
@@ -340,7 +340,7 @@
     .light .coord { color: var(--square-dark); }
     .dark .coord { color: var(--square-light); }
 
-    /* PANEL - MOVED HEADER TO BOTTOM AND MADE SMALLER */
+    /* PANEL */
     .side-panel {
       flex: 1;
       max-width: 340px;
@@ -355,7 +355,6 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
 
-    /* Small header moved down */
     .brand-title {
       font-size: 0.75rem;
       font-weight: 700;
@@ -468,6 +467,13 @@
       font-size: 0.75rem;
     }
 
+    .btn-action.download-btn {
+      grid-column: span 2;
+      background: rgba(0, 229, 255, 0.15);
+      border-color: var(--accent);
+      color: #FFF;
+    }
+
     .btn-action.reset {
       grid-column: span 2;
       background: rgba(255, 40, 80, 0.2);
@@ -532,7 +538,7 @@
           <ul>
             <li>Play against AI or with a friend locally.</li>
             <li>Real-time Check & Checkmate warnings.</li>
-            <li>Full support for Castling, En Passant & Promotion.</li>
+            <li>Full support for Castling, En Passant & Multi-Queen Promotion.</li>
           </ul>
         </div>
 
@@ -543,7 +549,7 @@
           <ul>
             <li><strong>Castling:</strong> Unhindered move between King & Rook.</li>
             <li><strong>En Passant:</strong> Pawn capturing rule.</li>
-            <li><strong>Pawn Promotion:</strong> Choice of Queen, Rook, Bishop, or Knight.</li>
+            <li><strong>Pawn Promotion:</strong> Support for Unlimited Queens!</li>
           </ul>
         </div>
 
@@ -654,10 +660,11 @@
         <div class="control-btns">
           <button class="btn-action" onclick="undoMove()">↩ Undo</button>
           <button class="btn-action" onclick="flipBoard()">🔄 Flip</button>
+          <button class="btn-action download-btn" onclick="downloadGameCode()">📥 Download HTML Code</button>
           <button class="btn-action reset" onclick="openWizard()">⚙ New Game</button>
         </div>
 
-        <!-- Moved and reduced header label -->
+        <!-- Header label -->
         <div class="brand-title">BHAVYA'S CHESS MASTER</div>
       </div>
     </div>
@@ -1130,7 +1137,7 @@
               if (Math.abs(r - kPos.r) <= 1 && Math.abs(c - kPos.c) <= 1) return true;
             } else {
               const isDiag = Math.abs(r - kPos.r) === Math.abs(c - kPos.c);
-              const isStraight = r === kPos.r || c === kPos.c;
+              const isStraight = (r === kPos.r) || (c === kPos.c);
               if ((p[1] === 'B' && isDiag) || (p[1] === 'R' && isStraight) || (p[1] === 'Q' && (isDiag || isStraight))) {
                 if (isRayClear(r, c, kPos.r, kPos.c, boardRef)) return true;
               }
@@ -1144,10 +1151,16 @@
     function isRayClear(r1, c1, r2, c2, boardRef) {
       const dr = Math.sign(r2 - r1);
       const dc = Math.sign(c2 - c1);
+
+      if (dr !== 0 && dc !== 0 && Math.abs(r2 - r1) !== Math.abs(c2 - c1)) return false;
+      if ((dr === 0 || dc === 0) && r1 !== r2 && c1 !== c2) return false;
+
       let currR = r1 + dr, currC = c1 + dc;
       while (currR !== r2 || currC !== c2) {
+        if (currR < 0 || currR >= 8 || currC < 0 || currC >= 8) return false;
         if (boardRef[currR][currC]) return false;
-        currR += dr; currC += dc;
+        currR += dr; 
+        currC += dc;
       }
       return true;
     }
@@ -1240,6 +1253,19 @@
     function flipBoard() {
       boardFlipped = !boardFlipped;
       renderBoard();
+    }
+
+    function downloadGameCode() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bhavya_chess_master.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     window.onload = () => {
