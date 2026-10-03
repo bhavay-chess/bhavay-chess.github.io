@@ -444,12 +444,6 @@
       gap: 4px;
     }
 
-    .log-entry {
-      display: flex;
-      justify-content: space-between;
-      padding: 2px 4px;
-    }
-
     .control-btns {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -480,27 +474,6 @@
       border-color: rgba(255, 40, 80, 0.4);
     }
 
-    .promo-options {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 10px;
-    }
-
-    .promo-btn {
-      width: 50px;
-      height: 50px;
-      font-size: 2rem;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid var(--primary);
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* MOBILE LAYOUT SPECIFIC ADJUSTMENTS */
     @media (max-width: 800px) {
       .game-wrapper {
         flex-direction: column;
@@ -549,7 +522,7 @@
           <ul>
             <li><strong>Castling:</strong> Unhindered move between King & Rook.</li>
             <li><strong>En Passant:</strong> Pawn capturing rule.</li>
-            <li><strong>Pawn Promotion:</strong> Support for Unlimited Queens!</li>
+            <li><strong>Pawn Promotion:</strong> Automatic Unlimited Queens!</li>
           </ul>
         </div>
 
@@ -617,14 +590,6 @@
     </div>
   </div>
 
-  <!-- 3. PROMOTION MODAL -->
-  <div class="modal-overlay hidden" id="promoModal">
-    <div class="wizard-card" style="text-align: center; max-width: 320px;">
-      <h3 style="color: var(--primary);">Choose Promotion</h3>
-      <div class="promo-options" id="promoContainer"></div>
-    </div>
-  </div>
-
   <!-- MAIN APP DISPLAY -->
   <div id="app-container">
     <div class="game-wrapper">
@@ -660,7 +625,6 @@
         <div class="control-btns">
           <button class="btn-action" onclick="undoMove()">↩ Undo</button>
           <button class="btn-action" onclick="flipBoard()">🔄 Flip</button>
-          <button class="btn-action download-btn" onclick="downloadGameCode()">📥 Download HTML Code</button>
           <button class="btn-action reset" onclick="openWizard()">⚙ New Game</button>
         </div>
 
@@ -706,7 +670,7 @@
       }
     }
 
-    /* UNICODE CHESS PIECES WITH REAL BLACK KNIGHT (♞) */
+    /* UNICODE CHESS PIECES */
     const SYMBOLS = {
       'wP': '♙', 'wR': '♖', 'wN': '♘', 'wB': '♗', 'wQ': '♕', 'wK': '♔',
       'bP': '♟', 'bR': '♜', 'bN': '♞', 'bB': '♝', 'bQ': '♛', 'bK': '♚'
@@ -959,17 +923,12 @@
       if (piece === 'bR' && from.c === 7) castlingRights.bK = false;
       if (piece === 'bR' && from.c === 0) castlingRights.bQ = false;
 
+      // AUTOMATIC MULTI-QUEEN PROMOTION LOGIC
       if (piece[1] === 'P' && (to.r === 0 || to.r === 7)) {
-        if (gameMode === 'ai' && turn !== playerSide) {
-          board[to.r][to.c] = turn + 'Q';
-          finalizeTurn(from, to, piece);
-        } else {
-          promptPromotion(to.r, to.c, turn, () => finalizeTurn(from, to, piece));
-          return;
-        }
-      } else {
-        finalizeTurn(from, to, piece);
+        board[to.r][to.c] = turn + 'Q'; // Direct automatic conversion to Queen
       }
+
+      finalizeTurn(from, to, piece);
     }
 
     function finalizeTurn(from, to, piece) {
@@ -991,32 +950,12 @@
       renderBoard();
     }
 
-    function promptPromotion(r, c, color, callback) {
-      const modal = document.getElementById('promoModal');
-      const container = document.getElementById('promoContainer');
-      container.innerHTML = '';
-
-      ['Q', 'R', 'B', 'N'].forEach(type => {
-        const btn = document.createElement('button');
-        btn.className = 'promo-btn';
-        btn.innerHTML = SYMBOLS[color + type];
-        btn.onclick = () => {
-          board[r][c] = color + type;
-          modal.classList.add('hidden');
-          callback();
-        };
-        container.appendChild(btn);
-      });
-
-      modal.classList.remove('hidden');
-    }
-
     function triggerGameOver(msg) {
       document.getElementById('victoryMsg').innerText = msg;
       document.getElementById('victoryModal').classList.remove('hidden');
     }
 
-    /* MOVES VALIDATION */
+    /* MOVES VALIDATION & BOARD HELPERS */
     function getPseudoLegalMoves(r, c) {
       const piece = board[r][c];
       if (!piece) return [];
@@ -1093,76 +1032,49 @@
 
     function getLegalMoves(r, c) {
       const pseudo = getPseudoLegalMoves(r, c);
-      const color = board[r][c][0];
+      const piece = board[r][c];
+      if (!piece) return [];
+      const color = piece[0];
+
       return pseudo.filter(m => {
-        const tempBoard = JSON.parse(JSON.stringify(board));
-        tempBoard[m.r][m.c] = tempBoard[r][c];
-        tempBoard[r][c] = null;
-        if (m.special === 'enPassant') {
-          const capRow = color === 'w' ? m.r + 1 : m.r - 1;
-          tempBoard[capRow][m.c] = null;
-        }
-        return !isInCheckOnBoard(color, tempBoard);
+        const backupTo = board[m.r][m.c];
+        const backupFrom = board[r][c];
+        
+        board[m.r][m.c] = piece;
+        board[r][c] = null;
+
+        const check = isInCheck(color);
+
+        board[r][c] = backupFrom;
+        board[m.r][m.c] = backupTo;
+
+        return !check;
       });
     }
 
-    function findKing(color, boardRef = board) {
+    function findKing(color) {
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-          if (boardRef[r][c] === color + 'K') return { r, c };
+          if (board[r][c] === color + 'K') return { r, c };
         }
       }
       return null;
     }
 
     function isInCheck(color) {
-      return isInCheckOnBoard(color, board);
-    }
-
-    function isInCheckOnBoard(color, boardRef) {
-      const kPos = findKing(color, boardRef);
-      if (!kPos) return false;
+      const kingPos = findKing(color);
+      if (!kingPos) return false;
       const enemyColor = color === 'w' ? 'b' : 'w';
 
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-          if (boardRef[r][c] && boardRef[r][c][0] === enemyColor) {
-            const p = boardRef[r][c];
-            if (p[1] === 'P') {
-              const dir = enemyColor === 'w' ? -1 : 1;
-              if (r + dir === kPos.r && (c - 1 === kPos.c || c + 1 === kPos.c)) return true;
-            } else if (p[1] === 'N') {
-              if (Math.abs(r - kPos.r) * Math.abs(c - kPos.c) === 2) return true;
-            } else if (p[1] === 'K') {
-              if (Math.abs(r - kPos.r) <= 1 && Math.abs(c - kPos.c) <= 1) return true;
-            } else {
-              const isDiag = Math.abs(r - kPos.r) === Math.abs(c - kPos.c);
-              const isStraight = (r === kPos.r) || (c === kPos.c);
-              if ((p[1] === 'B' && isDiag) || (p[1] === 'R' && isStraight) || (p[1] === 'Q' && (isDiag || isStraight))) {
-                if (isRayClear(r, c, kPos.r, kPos.c, boardRef)) return true;
-              }
-            }
+          if (board[r][c] && board[r][c][0] === enemyColor) {
+            const moves = getPseudoLegalMoves(r, c);
+            if (moves.some(m => m.r === kingPos.r && m.c === kingPos.c)) return true;
           }
         }
       }
       return false;
-    }
-
-    function isRayClear(r1, c1, r2, c2, boardRef) {
-      const dr = Math.sign(r2 - r1);
-      const dc = Math.sign(c2 - c1);
-
-      if (dr !== 0 && dc !== 0 && Math.abs(r2 - r1) !== Math.abs(c2 - c1)) return false;
-      if ((dr === 0 || dc === 0) && r1 !== r2 && c1 !== c2) return false;
-
-      let currR = r1 + dr, currC = c1 + dc;
-      while (currR !== r2 || currC !== c2) {
-        if (currR < 0 || currR >= 8 || currC < 0 || currC >= 8) return false;
-        if (boardRef[currR][currC]) return false;
-        currR += dr; 
-        currC += dc;
-      }
-      return true;
     }
 
     function hasNoLegalMoves(color) {
@@ -1176,72 +1088,44 @@
       return true;
     }
 
-    /* AI ENGINE */
+    /* AI / COMPUTER ENGINE */
     function makeAIMove() {
       const allMoves = [];
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
           if (board[r][c] && board[r][c][0] === turn) {
             const moves = getLegalMoves(r, c);
-            moves.forEach(m => allMoves.push({ from: { r, c }, to: m, special: m.special }));
+            moves.forEach(m => allMoves.push({ from: { r, c }, to: { r: m.r, c: m.c }, special: m.special }));
           }
         }
       }
 
       if (allMoves.length === 0) return;
 
-      let chosenMove;
-      if (aiDifficulty === 'casual') {
-        chosenMove = allMoves[Math.floor(Math.random() * allMoves.length)];
-      } else {
-        let bestScore = -Infinity;
-        chosenMove = allMoves[0];
+      let chosen = allMoves[Math.floor(Math.random() * allMoves.length)];
 
-        allMoves.forEach(mv => {
-          const val = evaluateMove(mv);
-          if (val > bestScore) {
-            bestScore = val;
-            chosenMove = mv;
-          }
-        });
+      if (aiDifficulty === 'pro') {
+        const captureMoves = allMoves.filter(m => board[m.to.r][m.to.c] !== null);
+        if (captureMoves.length > 0) {
+          chosen = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+        }
       }
 
-      executeMove(chosenMove.from, chosenMove.to, chosenMove.special);
+      executeMove(chosen.from, chosen.to, chosen.special);
     }
 
-    function evaluateMove(mv) {
-      const pValues = { P: 10, N: 30, B: 30, R: 50, Q: 90, K: 900 };
-      const target = board[mv.to.r][mv.to.c];
-      let score = 0;
-      if (target) score += pValues[target[1]] * 10;
-      if (mv.to.r >= 3 && mv.to.r <= 4 && mv.to.c >= 3 && mv.to.c <= 4) score += 5;
-      return score;
-    }
-
-    /* UI UPDATES */
-    function updateStatusUI() {
-      document.getElementById('turnText').innerText = turn === 'w' ? "White's Move" : "Black's Move";
-      document.getElementById('turnBox').className = `turn-box ${turn === 'w' ? 'white' : 'black'}`;
-
-      document.getElementById('capturedWhite').innerHTML = capturedPieces.w.map(p => SYMBOLS[p]).join(' ');
-      document.getElementById('capturedBlack').innerHTML = capturedPieces.b.map(p => SYMBOLS[p]).join(' ');
-
-      const logEl = document.getElementById('moveLog');
-      logEl.innerHTML = '';
-      moveHistory.forEach((m, i) => {
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        div.innerHTML = `<span>#${i + 1}</span> <span>${m.txt}</span>`;
-        logEl.appendChild(div);
-      });
-      logEl.scrollTop = logEl.scrollHeight;
+    /* CONTROLS & UI UPDATES */
+    function flipBoard() {
+      boardFlipped = !boardFlipped;
+      renderBoard();
     }
 
     function undoMove() {
       if (moveHistory.length === 0) return;
       moveHistory.pop();
       if (moveHistory.length > 0) {
-        board = JSON.parse(JSON.stringify(moveHistory[moveHistory.length - 1].boardState));
+        const last = moveHistory[moveHistory.length - 1];
+        board = JSON.parse(JSON.stringify(last.boardState));
       } else {
         board = JSON.parse(JSON.stringify(initialBoard));
       }
@@ -1250,27 +1134,20 @@
       renderBoard();
     }
 
-    function flipBoard() {
-      boardFlipped = !boardFlipped;
-      renderBoard();
+    function updateStatusUI() {
+      document.getElementById('turnBox').className = `turn-box ${turn === 'w' ? 'white' : 'black'}`;
+      document.getElementById('turnText').innerText = turn === 'w' ? "White's Move" : "Black's Move";
+
+      document.getElementById('capturedWhite').innerHTML = capturedPieces.w.map(p => SYMBOLS[p]).join(' ');
+      document.getElementById('capturedBlack').innerHTML = capturedPieces.b.map(p => SYMBOLS[p]).join(' ');
+
+      const logBox = document.getElementById('moveLog');
+      logBox.innerHTML = moveHistory.map((m, i) => `<div class="log-entry"><span>${i + 1}.</span><span>${m.txt}</span></div>`).join('');
+      logBox.scrollTop = logBox.scrollHeight;
     }
 
-    function downloadGameCode() {
-      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'bhavya_chess_master.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    window.onload = () => {
-      openWizard();
-    };
+    // Launch Wizard
+    openWizard();
   </script>
 </body>
 </html>
