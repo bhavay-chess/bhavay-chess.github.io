@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Game with AI, Sound & Pawn Promotion</title>
+  <title>Chess Game with Checkmate & Sound</title>
   <style>
     * {
       box-sizing: border-box;
@@ -90,7 +90,7 @@
       transform: scale(1.1);
     }
 
-    /* Large Board Layout */
+    /* Board Layout */
     .board-container {
       width: 520px;
       height: 520px;
@@ -124,6 +124,7 @@
     .square.light { background-color: #f0d9b5; color: #000; }
     .square.dark { background-color: #b58863; color: #000; }
     .square.selected { background-color: #baca44 !important; }
+    .square.in-check { background-color: #e74c3c !important; }
 
     .dot {
       width: 18px;
@@ -134,18 +135,18 @@
     }
 
     .status {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: bold;
       color: #f1c40f;
       margin-bottom: 12px;
     }
 
-    /* Promotion Modal Style */
+    /* Modals */
     .modal {
       display: none;
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.92);
       border-radius: 16px;
       flex-direction: column;
       justify-content: center;
@@ -193,7 +194,7 @@
   <!-- PAGE 2: Rules -->
   <div id="page-2" class="screen">
     <h2>Game Rules</h2>
-    <p>When your Pawn reaches the opposite baseline, promote it to a **Queen, Rook, Bishop, or Knight**!</p>
+    <p>Checkmate opponent's King to win. King cannot be captured!</p>
     <button class="btn" onclick="nextPage(3)">Next</button>
   </div>
 
@@ -207,7 +208,7 @@
     <button class="btn" onclick="nextPage(4)">Next</button>
   </div>
 
-  <!-- PAGE 4: Game Mode Selection -->
+  <!-- PAGE 4: Mode Selection -->
   <div id="page-4" class="screen">
     <h2>Select Game Mode</h2>
     <p>Choose your opponent to begin:</p>
@@ -228,16 +229,20 @@
       <h2>Promote Your Pawn</h2>
       <div class="promotion-choices" id="promo-choices"></div>
     </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameover-modal" class="modal">
+      <h1 id="gameover-title">Game Over</h1>
+      <p id="gameover-desc"></p>
+      <button class="btn" onclick="location.reload()">Play Again</button>
+    </div>
   </div>
 
   <script>
-    // Audio Synthesizer for Chess Sound Effects
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playSound(type) {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
@@ -248,22 +253,25 @@
         osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.08);
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.08);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.08);
       } else if (type === 'capture') {
         osc.frequency.setValueAtTime(600, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.12);
         gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.12);
-      } else if (type === 'promote') {
+        osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+      } else if (type === 'promote' || type === 'check') {
         osc.frequency.setValueAtTime(400, audioCtx.currentTime);
         osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
         gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.2);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+      } else if (type === 'gameover') {
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
       }
     }
 
@@ -298,6 +306,7 @@
     let selectedSquare = null;
     let validMoves = [];
     let pendingPromotion = null;
+    let isGameOver = false;
 
     function initGame() {
       board = [
@@ -311,9 +320,9 @@
         ['wR','wN','wB','wQ','wK','wB','wN','wR']
       ];
       turn = 'w';
+      isGameOver = false;
       renderBoard();
 
-      // If user selected Black in Computer mode, AI makes the first move
       if (gameMode === 'computer' && userColor === 'b' && turn === 'w') {
         setTimeout(makeAIMove, 600);
       }
@@ -324,7 +333,13 @@
       if (!boardEl) return;
       
       boardEl.innerHTML = '';
-      document.getElementById('status').innerText = "Turn: " + (turn === 'w' ? 'White' : 'Black');
+      
+      const inCheck = isKingInCheck(turn, board);
+      let statusText = "Turn: " + (turn === 'w' ? 'White' : 'Black');
+      if (inCheck) statusText += " (CHECK!)";
+      document.getElementById('status').innerText = statusText;
+
+      const kingPos = findKing(turn, board);
 
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
@@ -333,6 +348,10 @@
           
           if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) {
             square.classList.add('selected');
+          }
+
+          if (inCheck && kingPos && kingPos.r === r && kingPos.c === c) {
+            square.classList.add('in-check');
           }
 
           const piece = board[r][c];
@@ -353,8 +372,8 @@
     }
 
     function handleSquareClick(r, c) {
-      if (pendingPromotion) return;
-      if (gameMode === 'computer' && turn !== userColor) return; // Prevent clicking during AI turn
+      if (pendingPromotion || isGameOver) return;
+      if (gameMode === 'computer' && turn !== userColor) return;
 
       if (selectedSquare) {
         const move = validMoves.find(m => m.r === r && m.c === c);
@@ -363,11 +382,6 @@
           selectedSquare = null;
           validMoves = [];
           renderBoard();
-
-          // AI Turn Trigger
-          if (gameMode === 'computer' && turn !== userColor && !pendingPromotion) {
-            setTimeout(makeAIMove, 600);
-          }
           return;
         }
       }
@@ -375,7 +389,7 @@
       const piece = board[r][c];
       if (piece && piece[0] === turn) {
         selectedSquare = { r, c };
-        validMoves = getPseudoLegalMoves(r, c);
+        validMoves = getLegalMoves(r, c);
       } else {
         selectedSquare = null;
         validMoves = [];
@@ -387,12 +401,8 @@
       const piece = board[from.r][from.c];
       const target = board[to.r][to.c];
 
-      // Play Sound
-      if (target) {
-        playSound('capture');
-      } else {
-        playSound('move');
-      }
+      if (target) playSound('capture');
+      else playSound('move');
 
       board[to.r][to.c] = piece;
       board[from.r][from.c] = null;
@@ -403,14 +413,41 @@
         playSound('promote');
 
         if (gameMode === 'computer' && piece[0] !== userColor) {
-          selectPromotion('Q'); // AI automatically selects Queen
+          selectPromotion('Q');
         } else {
           showPromotionModal(piece[0]);
         }
         return;
       }
 
+      finishTurn();
+    }
+
+    function finishTurn() {
       turn = turn === 'w' ? 'b' : 'w';
+
+      // Checkmate or Stalemate Check
+      if (hasNoLegalMoves(turn)) {
+        isGameOver = true;
+        playSound('gameover');
+        if (isKingInCheck(turn, board)) {
+          const winner = turn === 'w' ? 'Black' : 'White';
+          showGameOver("Checkmate!", winner + " wins the game!");
+        } else {
+          showGameOver("Draw!", "Stalemate - No legal moves left.");
+        }
+        return;
+      }
+
+      if (isKingInCheck(turn, board)) {
+        playSound('check');
+      }
+
+      renderBoard();
+
+      if (gameMode === 'computer' && turn !== userColor && !pendingPromotion && !isGameOver) {
+        setTimeout(makeAIMove, 600);
+      }
     }
 
     function showPromotionModal(color) {
@@ -435,22 +472,25 @@
         board[r][c] = color + chosenType;
         pendingPromotion = null;
         document.getElementById('promotion-modal').classList.remove('active');
-        turn = turn === 'w' ? 'b' : 'w';
-        renderBoard();
-
-        if (gameMode === 'computer' && turn !== userColor) {
-          setTimeout(makeAIMove, 600);
-        }
+        finishTurn();
       }
+    }
+
+    function showGameOver(title, desc) {
+      document.getElementById('gameover-title').innerText = title;
+      document.getElementById('gameover-desc').innerText = desc;
+      document.getElementById('gameover-modal').classList.add('active');
     }
 
     // AI Engine
     function makeAIMove() {
+      if (isGameOver) return;
       const allMoves = [];
+
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
           if (board[r][c] && board[r][c][0] === turn) {
-            const moves = getPseudoLegalMoves(r, c);
+            const moves = getLegalMoves(r, c);
             moves.forEach(m => {
               let score = 0;
               const target = board[m.r][m.c];
@@ -458,6 +498,13 @@
                 const values = { 'P': 10, 'N': 30, 'B': 30, 'R': 50, 'Q': 90, 'K': 900 };
                 score = values[target[1]] || 10;
               }
+              
+              // Prefer checking user
+              const tempBoard = cloneBoard(board);
+              tempBoard[m.r][m.c] = tempBoard[r][c];
+              tempBoard[r][c] = null;
+              if (isKingInCheck(userColor, tempBoard)) score += 15;
+
               allMoves.push({ from: { r, c }, to: m, score: score });
             });
           }
@@ -475,8 +522,63 @@
       }
     }
 
-    function getPseudoLegalMoves(r, c) {
-      const piece = board[r][c];
+    // Real Chess Rules (Check Validation)
+    function getLegalMoves(r, c) {
+      const pseudoMoves = getPseudoLegalMoves(r, c, board);
+      const color = board[r][c][0];
+
+      return pseudoMoves.filter(m => {
+        const tempBoard = cloneBoard(board);
+        tempBoard[m.r][m.c] = tempBoard[r][c];
+        tempBoard[r][c] = null;
+        return !isKingInCheck(color, tempBoard);
+      });
+    }
+
+    function hasNoLegalMoves(color) {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (board[r][c] && board[r][c][0] === color) {
+            if (getLegalMoves(r, c).length > 0) return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function isKingInCheck(color, b) {
+      const kingPos = findKing(color, b);
+      if (!kingPos) return false;
+      const enemyColor = color === 'w' ? 'b' : 'w';
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (b[r][c] && b[r][c][0] === enemyColor) {
+            const enemyMoves = getPseudoLegalMoves(r, c, b);
+            if (enemyMoves.some(m => m.r === kingPos.r && m.c === kingPos.c)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    function findKing(color, b) {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (b[r][c] === color + 'K') return { r, c };
+        }
+      }
+      return null;
+    }
+
+    function cloneBoard(b) {
+      return b.map(row => [...row]);
+    }
+
+    function getPseudoLegalMoves(r, c, b) {
+      const piece = b[r][c];
       if (!piece) return [];
       const color = piece[0];
       const type = piece[1];
@@ -484,12 +586,12 @@
       const dirPawn = color === 'w' ? -1 : 1;
 
       if (type === 'P') {
-        if (r + dirPawn >= 0 && r + dirPawn < 8 && !board[r + dirPawn][c]) {
+        if (r + dirPawn >= 0 && r + dirPawn < 8 && !b[r + dirPawn][c]) {
           moves.push({ r: r + dirPawn, c });
         }
         [-1, 1].forEach(dc => {
           if (c + dc >= 0 && c + dc < 8 && r + dirPawn >= 0 && r + dirPawn < 8) {
-            const target = board[r + dirPawn][c + dc];
+            const target = b[r + dirPawn][c + dc];
             if (target && target[0] !== color) {
               moves.push({ r: r + dirPawn, c: c + dc });
             }
@@ -500,7 +602,7 @@
         offsets.forEach(([dr, dc]) => {
           const nr = r + dr, nc = c + dc;
           if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
-            if (!board[nr][nc] || board[nr][nc][0] !== color) moves.push({ r: nr, c: nc });
+            if (!b[nr][nc] || b[nr][nc][0] !== color) moves.push({ r: nr, c: nc });
           }
         });
       } else if (type === 'K') {
@@ -508,7 +610,7 @@
         offsets.forEach(([dr, dc]) => {
           const nr = r + dr, nc = c + dc;
           if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
-            if (!board[nr][nc] || board[nr][nc][0] !== color) moves.push({ r: nr, c: nc });
+            if (!b[nr][nc] || b[nr][nc][0] !== color) moves.push({ r: nr, c: nc });
           }
         });
       } else {
@@ -519,10 +621,10 @@
         dirs.forEach(([dr, dc]) => {
           let nr = r + dr, nc = c + dc;
           while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
-            if (!board[nr][nc]) {
+            if (!b[nr][nc]) {
               moves.push({ r: nr, c: nc });
             } else {
-              if (board[nr][nc][0] !== color) moves.push({ r: nr, c: nc });
+              if (b[nr][nc][0] !== color) moves.push({ r: nr, c: nc });
               break;
             }
             nr += dr; nc += dc;
