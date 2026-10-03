@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Game with AI & Sound</title>
+  <title>Chess Game with AI, Sound & Pawn Promotion</title>
   <style>
     * {
       box-sizing: border-box;
@@ -91,7 +90,7 @@
       transform: scale(1.1);
     }
 
-    /* Larger Board Layout */
+    /* Large Board Layout */
     .board-container {
       width: 520px;
       height: 520px;
@@ -172,10 +171,12 @@
       padding: 10px 20px;
       cursor: pointer;
       transition: 0.2s;
+      color: white;
     }
 
     .promo-btn:hover {
       background: #f1c40f;
+      color: black;
       transform: scale(1.1);
     }
   </style>
@@ -185,20 +186,20 @@
   <!-- PAGE 1: Welcome -->
   <div id="page-1" class="screen active">
     <h1>Welcome to Chess!</h1>
-    <p>Enjoy playing Chess with AI or with your Friends!</p>
+    <p>Play against Computer AI or play locally with a friend!</p>
     <button class="btn" onclick="nextPage(2)">Next</button>
   </div>
 
   <!-- PAGE 2: Rules -->
   <div id="page-2" class="screen">
     <h2>Game Rules</h2>
-    <p>When your Pawn reaches the last row, promote it to a **Queen, Rook, Bishop, or Knight**!</p>
+    <p>When your Pawn reaches the opposite baseline, promote it to a **Queen, Rook, Bishop, or Knight**!</p>
     <button class="btn" onclick="nextPage(3)">Next</button>
   </div>
 
   <!-- PAGE 3: Color Selection -->
   <div id="page-3" class="screen">
-    <h2>Choose Your Pieces Color</h2>
+    <h2>Choose Your Color</h2>
     <div class="options-grid">
       <div class="color-option selected" style="background: #ffffff;" onclick="selectColor('w', this)"></div>
       <div class="color-option" style="background: #333333;" onclick="selectColor('b', this)"></div>
@@ -209,7 +210,7 @@
   <!-- PAGE 4: Game Mode Selection -->
   <div id="page-4" class="screen">
     <h2>Select Game Mode</h2>
-    <p>How would you like to play?</p>
+    <p>Choose your opponent to begin:</p>
     <button class="btn" onclick="startGame('computer')">Play with Computer (AI)</button>
     <button class="btn" onclick="startGame('friends')">Play with Friends</button>
   </div>
@@ -230,7 +231,7 @@
   </div>
 
   <script>
-    // Audio Context Synthesizer for Chess Sound Effects
+    // Audio Synthesizer for Chess Sound Effects
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playSound(type) {
@@ -312,7 +313,7 @@
       turn = 'w';
       renderBoard();
 
-      // If user selected Black and Computer mode, AI makes the first move
+      // If user selected Black in Computer mode, AI makes the first move
       if (gameMode === 'computer' && userColor === 'b' && turn === 'w') {
         setTimeout(makeAIMove, 600);
       }
@@ -386,7 +387,7 @@
       const piece = board[from.r][from.c];
       const target = board[to.r][to.c];
 
-      // Sound Effect Logic
+      // Play Sound
       if (target) {
         playSound('capture');
       } else {
@@ -396,13 +397,13 @@
       board[to.r][to.c] = piece;
       board[from.r][from.c] = null;
 
-      // Pawn Promotion Trigger
+      // Pawn Promotion Check
       if (piece[1] === 'P' && (to.r === 0 || to.r === 7)) {
         pendingPromotion = { r: to.r, c: to.c, color: piece[0] };
         playSound('promote');
 
         if (gameMode === 'computer' && piece[0] !== userColor) {
-          selectPromotion('Q'); // AI always promotes to Queen
+          selectPromotion('Q'); // AI automatically selects Queen
         } else {
           showPromotionModal(piece[0]);
         }
@@ -443,7 +444,7 @@
       }
     }
 
-    // Smart Computer (AI) Engine
+    // AI Engine
     function makeAIMove() {
       const allMoves = [];
       for (let r = 0; r < 8; r++) {
@@ -454,7 +455,6 @@
               let score = 0;
               const target = board[m.r][m.c];
               if (target) {
-                // Priority capturing high value pieces
                 const values = { 'P': 10, 'N': 30, 'B': 30, 'R': 50, 'Q': 90, 'K': 900 };
                 score = values[target[1]] || 10;
               }
@@ -465,10 +465,7 @@
       }
 
       if (allMoves.length > 0) {
-        // Sort moves to prefer capturing pieces
         allMoves.sort((a, b) => b.score - a.score);
-        
-        // Take best move or random among top choices
         const bestScore = allMoves[0].score;
         const topMoves = allMoves.filter(m => m.score === bestScore);
         const chosenMove = topMoves[Math.floor(Math.random() * topMoves.length)];
